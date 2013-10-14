@@ -3,6 +3,7 @@
 '''
 import os
 import sys
+import shutil
 import zipfile
 import urllib.request
 
@@ -10,8 +11,8 @@ js = {'underscore-min.js':'http://underscorejs.org/underscore-min.js',
       'backbone-min.js':'http://backbonejs.org/backbone-min.js',
       'require.js':'http://requirejs.org/docs/release/2.1.8/minified/require.js',
 
-      'jquery-1.10.2.min.js':'http://code.jquery.com/jquery-1.10.2.min.js',
-      'jquery-1.10.2.min.map':'http://code.jquery.com/jquery-1.10.2.min.map',
+      'jquery-1.10.2.min.js':'http://code.jquery.com/jquery-1.10.3.min.js',
+      'jquery-1.10.2.min.map':'http://code.jquery.com/jquery-1.10.3.min.map',
 
       'jquery.mobile-1.3.2.js':'http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.js',
       'jquery.mobile-1.3.2.min.css':'http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css',
@@ -25,15 +26,23 @@ jsz = {'jquery-ui-1.10.3.zip':('jquery-ui-1.10.3/ui/minified/', 'jquery-ui-1.10.
        # 'jquery.mobile-1.4.0-beta.1.zip':('images/', 'jquery.mobile.theme-1.3.2.min.css', 'jquery.mobile.structure-1.3.2.min.css', 'jquery.mobile-1.3.2.min.css', 'jquery.mobile-1.3.2.min.js', 'jquery.mobile-1.3.2.min.map'),
     }
 
-def rejszip(path:str=None, jszip:dict=None):
-    if not path:
-        path = os.getcwd()
-    if not jszip:
-        jszip = jsz
+jscp = {'jquery-1.10.2.min.js':'jquery.min.js',
+        'jquery-1.10.2.min.map':'jquery.min.map',
+        'jquery.mobile-1.3.2.js':'jquery.mobile.min.js',
+        'jquery.mobile-1.3.2.min.css':'jquery.mobile.min.css',
+}
 
-    path = os.path.abspath(path)
-    if not os.path.exists(path):
-        os.makedirs(path)
+def rejsname(path:str=None, jscopy:dict=None):
+    jscopy = jscopy if jscopy else jscp
+
+    if os.path.exists(path):
+        for filename, copyname in jscopy.items():
+            copyname = os.path.join(path, copyname)
+            if not os.path.exists(copyname) or not os.path.getsize(copyname):
+                shutil.copy(os.path.join(path, filename), copyname)
+
+def rejszip(path:str=None, jszip:dict=None):
+    jszip = jszip if jszip else jsz
 
     if os.path.exists(path):
         for zipfilename, nodes in jszip.items():
@@ -66,18 +75,12 @@ def reporthook(blocknum, blocksize, totalsize):
 
 
 def rejslib(path:str=None, jslib:dict=None):
-    if not path:
-        path = os.getcwd()
-    if not jslib:
-        jslib = js
-
-    path = os.path.abspath(path)
-    if not os.path.exists(path):
-        os.makedirs(path)
+    jslib = jslib if jslib else js
 
     if os.path.exists(path):
         for filename, url in jslib.items():
-            if not os.path.exists(os.path.join(path, filename)):
+            pathfile = os.path.join(path, filename)
+            if not os.path.exists(pathfile) or not os.path.getsize(pathfile): # not exists or empty file
                 sys.stderr.write("GET %s => %s.\n" %(url, filename))
                 filename = os.path.join(path, filename)
                 urllib.request.urlretrieve(url, filename, reporthook)
@@ -90,5 +93,12 @@ def rejslib(path:str=None, jslib:dict=None):
 if __name__ == '__main__':
     print('rejslib: recreate commonjs libs, usage:rejslib [path]')
     path =  sys.argv[1] if len(sys.argv)>1 else None
+    if not path:
+        path = os.getcwd()
+    path = os.path.abspath(path)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     rejslib(path)
     rejszip(path)
+    rejsname(path)
