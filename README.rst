@@ -1,7 +1,10 @@
 WEB3
 ====
 
-web3 is a microframework for Python3 based on WSGI2
+.. web3 is a microframework for Python3 based on WSGI2
+
+`web3 <https://github.com/huanguan1978/web3>`_ is a microframework for Python3 based on `wsgi2 <http://www.python.org/dev/peps/pep-0444/>`_ 
+
 
 Give It a Try
 -------------
@@ -11,7 +14,6 @@ Give It a Try
     Refresh latest javascript framework::
         $ python3 rejslib.py   /home/MyName/MyProject/public/app/www/javascript/framework/
 
-    .. tree.py and rejslib.py in web3/web3/lib/.
 Running the project Application
 -------------------------------
 
