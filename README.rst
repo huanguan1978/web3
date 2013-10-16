@@ -1,15 +1,22 @@
-web3
+WEB3
 ====
 
 web3 is a microframework for Python3 based on WSGI2
 
 Give It a Try
+-------------
 
-/bin/env/python3 tree.py -t 1 /home/your_name/your_project
-Visiting http://localhost:8080/your_project/public/index.html you will see a ready made sample static application.
+    Creating the Project::
+        $ python3 tree.py -t 1 /home/MyName/MyProject
+    Refresh latest javascript framework::
+        $ python3 rejslib.py   /home/MyName/MyProject/public/app/www/javascript/framework/
 
-/bin/env/python3 /home/your_project/your_project/httpd.py /home/your_project/project
-visiting http://localhost:8080/test you will see a ready made sample dynamic application.
+    .. tree.py and rejslib.py in web3/web3/lib/.
+Running the project Application
+-------------------------------
 
-Refresh latest Javascript framework
-/bin/evn/python3 rejslib.py /home/your_name/your_project/public/app/www/javascript/framework/
+    visit you web3 static application in their browser by visiting http://localhost:8080::
+        $ python3 tree.py /home/MyName/MyProject
+
+    visit you web3 dynamic application in their browser by visiting http://localhost:8080/test::
+        $ python3 /home/MyName/MyProject/MyProject/httpd.py /home/MyName/MyProject
