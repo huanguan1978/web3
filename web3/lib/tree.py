@@ -14,12 +14,18 @@ projectname
 |_tests
 |_projectname
 | |_ __init__.py
+| |_httpd.py
+| |_url.py
 | |_db
 | |_etc
 | |_public
 | | |_js
 | | | |_global.js
 | | |_css
+| | | |_basic.css
+| | | |_layout.css
+| | | |_color.css
+| | | |_typography.css
 | | |_image
 | | |_upload
 | | |_index.html
@@ -27,6 +33,8 @@ projectname
 | | |_favicon.png
 | | |_tl
 | | | |_private
+| | | |_test
+| | | | |_test.html
 | | |_app
 | | | |_www
 | | | | |_default.html
@@ -44,8 +52,15 @@ projectname
 | | | | | | |_ underscore-min.js
 | | | | | | |_ backbone-min.js
 | |_lib
+| | |_ __init__.py
+| | |_node.py
+| | |_helper.py
+| | |_test.py
 | | |_w3
 | | | |_ __init__.py
+| | | |_helper.py
+| | | |_tmpl.py
+| | | |_test.py
 | | | |_private
 | | | | |_ __init__.py
 | | |_ws
@@ -53,91 +68,65 @@ projectname
 '''
 
 import os
+import sys
+import configparser
 
-app_global_js = \
-'''
-//Disable jQM routing and component creation events. ref:https://github.com/ccoenraets/backbone-jquerymobile
-$(document).bind("mobileinit", function(){     
-
-   $.mobile.hashListeningEnabled = false;    // disable hash-routing
-   $.mobile.linkBindingEnabled = false;    // disable anchor-control
-   $.mobile.ajaxEnabled = false;    // can cause calling object creation twice and back button issues are solved
-   $.mobile.autoInitializePage = false;    // Otherwise after mobileinit, it tries to load a landing page
-   $.mobile.page.prototype.options.domCache = false;   // we want to handle caching and cleaning the DOM ourselves
-
-   // consider due to compatibility issues
-   $.mobile.pushStateEnabled = false;    // not supported by all browsers
-   $.mobile.phonegapNavigationEnabled = true;    // Solves phonegap issues with the back-button
-   $.mobile.page.prototype.options.degradeInputs.date = true;    //no native datepicker will conflict with the jQM component
-});
-'''
-
-app_index_html = \
-'''<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, target-densitydpi=device-dpi" />
-
-    <title>default</title>
-    <link rel="shortcut icon" type="image/vnd.microsoft.icon" href="favicon.ico" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="stylesheet" href="javascript/framework/jquery.mobile.min.css" />
-    <script src="javascript/framework/jquery.min.js"></script>
-    <script src="javascript/global.js"></script>
-    <script src="javascript/framework/jquery.mobile.min.js"></script>
-    <script src="javascript/framework/underscore-min.js"></script>
-    <script src="javascript/framework/backbone-min.js"></script>
-    <script src="cordova.js"></script>
-  </head>
-  <body>
-    <p>Hello world</p>
-  </body>
-  <script src="javascript/app.js" defer="defer"></script>
-</html>
-'''
-index_html = \
-'''<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>index</title>
-    <link rel="shortcut icon" type="image/vnd.microsoft.icon" href="favicon.ico" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <!--<link rel="stylesheet" href="js/jquery-ui/themes/base/minified/jquery-ui.min.css" />-->
-    <script src="app/www/javascript/framework/underscore-min.js"></script>
-    <script src="app/www/javascript/framework/backbone-min.js"></script>
-    <script src="app/www/javascript/framework/jquery.min.js"></script>
-    <!--<script src="js/jquery-ui/ui/minified/jquery-ui.min.js"></script>-->
-  </head>
-  <body>
-    <p>Hello world</p>
-  </body>
-  <script src="js/global.js" defer="defer"></script>
-</html>
-'''
-
-def touch(node:str, content=None)->bool:
+def touch(node:str, content=None, isfile:bool=False)->bool:
     '''some linux command touch, create empty file'''
     f = open(node, 'w')
     if content:
+        if isfile and os.path.exists(content):
+            f2 = open(content, 'r')
+            content = f2.read()
+            f2.close()
         f.write(content)
     f.close()
 
-def mktree(root:str)->bool:
+def confile(confile:str, conf:dict=None):
+    if os.path.exists(confile):
+        c = configparser.SafeConfigParser()
+        c.read(os.path.expanduser(confile))
+        if 'DEFAULT' in conf:
+            if 'application_root' in conf['DEFAULT']:
+                c['DEFAULT']['application_root'] = conf['DEFAULT']['application_root']
+            if 'document_root' in conf['DEFAULT']:
+                c['DEFAULT']['document_root'] = conf['DEFAULT']['document_root']
+            if 'web3_root' in conf['DEFAULT']:
+                c['DEFAULT']['web3_root'] = conf['DEFAULT']['web3_root']
+
+        if 'loggers' in conf:
+            if 'keys' in conf['loggers']:
+                c['loggers']['keys'] = conf['loggers']['keys']
+
+                project = c['loggers']['keys'].split(',')[-1]
+                project = project.strip()
+                section = "logger_{}".format(project)
+                if section in conf:
+                    c.remove_section(section)
+                c[section] = {}
+                c[section]['level']='DEBUG';
+                c[section]['qualname']=project
+                c[section]['handlers']=''
+
+        with open(confile, 'w') as f:
+            c.write(f)
+
+
+def mktree(root:str, path:str)->bool:
     '''make directory tree'''
     root = os.path.normpath(os.path.expanduser(os.path.expandvars(root)))
     project = root.split(os.sep)[-1]
     if not os.path.exists(root):
         os.makedirs(os.path.join(root, 'docs'))
         os.makedirs(os.path.join(root, 'tests'))
+        os.makedirs(os.path.join(root, project))
 
         touch(os.path.join(root, 'README.txt'))
         touch(os.path.join(root, 'COPYING.txt'))
         touch(os.path.join(root, 'setup.py'))
         touch(os.path.join(root,  '__init__.py'))
-
+        touch(os.path.join(root, project, 'url.py'), os.path.join(path, 'url.py'), True)
+        touch(os.path.join(root, project, 'httpd.py'), os.path.join(path, 'httpd.py'), True)
 
         os.makedirs(os.path.join(root, project, 'public/tl'))
         os.makedirs(os.path.join(root, project, 'public/js'))
@@ -145,13 +134,17 @@ def mktree(root:str)->bool:
         os.makedirs(os.path.join(root, project, 'public/image'))
         os.makedirs(os.path.join(root, project, 'public/upload'))
         touch(os.path.join(root, project, 'public/js/global.js'))
-        touch(os.path.join(root, project, 'public/index.html'), index_html)
+        touch(os.path.join(root, project, 'public/index.html'), os.path.join(path, 'index.html'), True)
         touch(os.path.join(root, project, 'public/favicon.ico'))
         touch(os.path.join(root, project, 'public/favicon.png'))
+        touch(os.path.join(root, project, 'public/css/basic.css'), os.path.join(path, 'basic.css'), True)
+        touch(os.path.join(root, project, 'public/css/layout.css'))
+        touch(os.path.join(root, project, 'public/css/color.css'))
+        touch(os.path.join(root, project, 'public/css/typography.css'))
+        os.makedirs(os.path.join(root, project, 'public/tl/test'))
+        touch(os.path.join(root, project, 'public/tl/test/test.html'), os.path.join(path, 'tl_test_test.html'), True)
         
         os.makedirs(os.path.join(root, project, 'db'))
-        os.makedirs(os.path.join(root, project, 'etc'))
-
         os.makedirs(os.path.join(root, project, 'lib/ws'))
         os.makedirs(os.path.join(root, project, 'lib/w3'))
         os.makedirs(os.path.join(root, project, 'lib/w3/private'))
@@ -159,6 +152,15 @@ def mktree(root:str)->bool:
         touch(os.path.join(root, project, 'lib/__init__.py'))
         touch(os.path.join(root, project, 'lib/ws/__init__.py'))
         touch(os.path.join(root, project, 'lib/w3/private/__init__.py'))
+        touch(os.path.join(root, project, 'lib/node.py'), os.path.join(path, 'lib_node.py'), True)
+        touch(os.path.join(root, project, 'lib/helper.py'), os.path.join(path, 'lib_helper.py'), True)
+        touch(os.path.join(root, project, 'lib/test.py'), os.path.join(path, 'lib_test.py'), True)
+        touch(os.path.join(root, project, 'lib/w3/tmpl.py'), os.path.join(path, 'w3_tmpl.py'), True)
+        touch(os.path.join(root, project, 'lib/w3/helper.py'), os.path.join(path, 'w3_helper.py'), True)
+        touch(os.path.join(root, project, 'lib/w3/test.py'), os.path.join(path, 'w3_test.py'), True)
+        touch(os.path.join(root, project, 'lib/ws/helper.py'), os.path.join(path, 'ws_helper.py'), True)
+        touch(os.path.join(root, project, 'lib/ws/test.py'), os.path.join(path, 'ws_test.py'), True)
+
 
         # mkdir jquerymobile and phonegap tree
         if not os.path.exists(os.path.join(root, project, 'public/app/www')):
@@ -168,10 +170,10 @@ def mktree(root:str)->bool:
         os.makedirs(os.path.join(root, project, 'public/app/www/stylesheet'))
         os.makedirs(os.path.join(root, project, 'public/app/www/javascript/framework'))
 
-        touch(os.path.join(root, project, 'public/app/www/default.html'), app_index_html)
+        touch(os.path.join(root, project, 'public/app/www/default.html'), os.path.join(path, 'app_index.html'), True)
         touch(os.path.join(root, project, 'public/app/www/favicon.ico'))
         touch(os.path.join(root, project, 'public/app/www/favicon.png'))
-        touch(os.path.join(root, project, 'public/app/www/javascript/global.js'), app_global_js)
+        touch(os.path.join(root, project, 'public/app/www/javascript/global.js'), os.path.join(path, 'app_global.js'), True)
         touch(os.path.join(root, project, 'public/app/www/javascript/app.js'))
         touch(os.path.join(root, project, 'public/app/www/javascript/framework/underscore-min.js'))
         touch(os.path.join(root, project, 'public/app/www/javascript/framework/backbone-min.js'))
@@ -179,6 +181,23 @@ def mktree(root:str)->bool:
         touch(os.path.join(root, project, 'public/app/www/javascript/framework/jquery.mobile.min.css'))
         touch(os.path.join(root, project, 'public/app/www/javascript/framework/jquery.mobile.min.js'))
         # touch(os.path.join(root, project, 'public/app/www/javascript/framework/cordova.js'))
+
+
+        os.makedirs(os.path.join(root, project, 'etc'))
+        confilename = os.path.join(root, project, 'etc', "{}.conf".format(project))
+        touch(confilename, os.path.join(path, 'project.conf'), True)
+        confdict = dict(
+            DEFAULT = dict(
+                application_root = os.path.join(root, project),
+                document_root = os.path.join(root, project, 'public'),
+                web3_root = os.path.normpath(os.path.join(path, os.path.pardir, os.path.pardir))
+                ),
+            loggers = dict(
+                keys = "root, {}".format(project)
+                )
+            )
+        confile(confilename, confdict)
+
         
 
 if __name__ == '__main__':
@@ -196,13 +215,10 @@ if __name__ == '__main__':
     parser.add_argument('node', nargs='?', default='~/public_html', help='project startup node, default:current directory') # positional argument
     parser.print_help()
     ns = parser.parse_args()
-    if ns.tree:
-        mktree(ns.node)
 
     if ns.lib:
         site.addsitedir(os.path.expanduser(ns.lib))
         print('site.addsitedir {}'.format(ns.lib))
-
 
     from web3.lib.node import Node
     from web3.middleware.middleware import T12, application
@@ -216,6 +232,11 @@ if __name__ == '__main__':
     # httpd = wsgiref.simple_server.make_server(ns.host, ns.port, app)
     httpd = wsgiref.simple_server.WSGIServer((ns.host, ns.port), wsgiref.simple_server.WSGIRequestHandler)
     httpd.set_app(app)
+
+    if ns.tree:
+        libpath = os.path.dirname(sys.modules[Node.__module__].__file__)
+        tmpl_path = os.path.normpath(os.path.join(os.path.join(libpath, os.path.pardir, 'tmpl')))
+        mktree(ns.node, tmpl_path)
 
     try:
         httpd.serve_forever()
