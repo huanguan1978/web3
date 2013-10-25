@@ -110,7 +110,8 @@ class AuthDigest(Middleware):
 
     def digest2dict(self, digest:str)->dict:
         '''digest auth header to dict '''
-        return dict([ i.split('=', 1) for i in digest.replace('"', '').split(', ')])
+        return dict([i.split('=', 1) for i in digest.replace('"', '').split(',')])
+        return dict([i.split('=', 1) for i in digest.replace('"', '').split(', ')])
 
     def nonce(self, req_digest:dict) ->str:
         d = req_digest

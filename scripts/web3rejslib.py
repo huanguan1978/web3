@@ -11,8 +11,8 @@ js = {'underscore-min.js':'http://underscorejs.org/underscore-min.js',
       'backbone-min.js':'http://backbonejs.org/backbone-min.js',
       'require.js':'http://requirejs.org/docs/release/2.1.8/minified/require.js',
 
-      'jquery-1.10.2.min.js':'http://code.jquery.com/jquery-1.10.3.min.js',
-      'jquery-1.10.2.min.map':'http://code.jquery.com/jquery-1.10.3.min.map',
+      'jquery-1.10.2.min.js':'http://code.jquery.com/jquery-1.10.2.min.js',
+      'jquery-1.10.2.min.map':'http://code.jquery.com/jquery-1.10.2.min.map',
 
       'jquery.mobile-1.3.2.js':'http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.js',
       'jquery.mobile-1.3.2.min.css':'http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css',

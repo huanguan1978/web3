@@ -190,7 +190,7 @@ def mktree(root:str, path:str)->bool:
             DEFAULT = dict(
                 application_root = os.path.join(root, project),
                 document_root = os.path.join(root, project, 'public'),
-                web3_root = os.path.normpath(os.path.join(path, os.path.pardir, os.path.pardir))
+                web3_root = os.path.normpath(os.path.join(path, os.path.pardir))
                 ),
             loggers = dict(
                 keys = "root, {}".format(project)
@@ -219,6 +219,9 @@ if __name__ == '__main__':
     if ns.lib:
         site.addsitedir(os.path.expanduser(ns.lib))
         print('site.addsitedir {}'.format(ns.lib))
+    if ns.node:
+        ns.node = os.path.abspath(ns.node)
+        print('project:{}'.format(ns.node))
 
     from web3.lib.node import Node
     from web3.middleware.middleware import T12, application

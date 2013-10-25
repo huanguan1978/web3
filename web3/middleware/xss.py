@@ -36,7 +36,7 @@ class XSS(Middleware):
             return self._app(environ)
 
         if query_string:
-            if len(query_string.decode()) > self._url_length:
+            if len(query_string) > self._url_length:
                 return self.__abrot(414) # '414 Request-URI Too Long'
 
             query_string = parse_qs(query_string)

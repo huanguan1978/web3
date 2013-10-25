@@ -76,7 +76,9 @@ if __name__ == '__main__':
     parser.print_help();print()
     ns = parser.parse_args()
 
-    confile = '{}.conf'.format(ns.node.split(os.sep)[-1])
+    if not ns.node.endswith('/'):
+        ns.node += '/'
+    confile = '{}.conf'.format(ns.node.split(os.sep)[-2])
     confile = os.path.join(ns.node, 'etc', confile)
     print("confile:{}".format(confile))
     application = app(confile)
